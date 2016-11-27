@@ -5,7 +5,82 @@ date: "11/26/2016"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+# import data 
+```{r}
+gene.list.arboreum <- read.csv("~/Desktop/GWAS/GWAS_analysis/GO_enrichment/gene_list.csv", header = T)
+str(gene.list.arboreum)
+colnames(gene.list.arboreum)[1] <- "GeneID"
+head(gene.list.arboreum)
+
+# Download the GO annotation and gene length for G.arboreum on terminal end
+# Format data for GOseq
+library(goseq)
+go.terms.arboreum <- read.delim("~/Desktop/GWAS/GWAS_analysis/GO_enrichment/G.arboreum_BGI-CGP_v1.0_genes2GO_modified.txt",header=FALSE,as.is=TRUE)
+head(go.terms.arboreum, 100)
+tail(go.terms.arboreum)
+
+# reformat GO terms, keep the duplicated gene IDs 
+go.terms.arboreum$V1 <- gsub("_BGI-A2_v1.0", "", go.terms.arboreum$V1)
+go.terms.arboreum$V4 <- gsub(":", "", go.terms.arboreum$V4)
+go.terms.arboreum$V4 <- gsub("GO", "GO:", go.terms.arboreum$V4)
+go.terms.arboreum <- go.terms.arboreum[,c("V1", "V4")]
+names(go.terms.arboreum) <- c("GeneID","GO")
+go.terms.arboreum$GO <- gsub("|", ",", go.terms.arboreum$GO, fixed = T) 
+
+# all arboreum genes 
+all.genes.arboreum <- read.delim("~/Desktop/GWAS/GWAS_analysis/GO_enrichment/arboreum_gene_ID.txt",as.is=TRUE)
+head(all.genes.arboreum)
+tail(all.genes.arboreum)
+names(all.genes.arboreum) <- "GeneID"
+
+gene.lengths.arboreum <- read.delim("~/Desktop/GWAS/GWAS_analysis/GO_enrichment/gene_ID_start_end",as.is=TRUE, header = F)
+head(gene.lengths.arboreum)
+gene.lengths.arboreum$length <- gene.lengths.arboreum$V5- gene.lengths.arboreum$V4 + 1
+gene.lengths.arboreum <- gene.lengths.arboreum[,c(1,7)]
+names(gene.lengths.arboreum)[1] <- "geneID"
+summary(gene.lengths.arboreum) 
+
+#we need to reduce the gene.length to only contain entries for those genes in our expressed.genes set.  We also need this as a vector
+gene.lengths.vector.arboreum <- gene.lengths.arboreum$length[gene.lengths.arboreum$geneID %in% all.genes.arboreum$GeneID]
+names(gene.lengths.vector.arboreum) <- gene.lengths.arboreum$geneID[gene.lengths.arboreum$geneID %in% all.genes.arboreum$GeneID]
+head(gene.lengths.vector.arboreum)
+tail(gene.lengths.vector.arboreum)
+length(gene.lengths.vector.arboreum)
+
+# Format go.terms for goseq. We want them in list format, and we need to separate the terms into separate elements.
+go.list.arboreum <- strsplit(go.terms.arboreum$GO,split=",")
+names(go.list.arboreum) <- go.terms.arboreum$GeneID
+head(go.list.arboreum)
+
+# Format gene expression data for goseq. 
+# We need a vector for each gene with 1 indicating differential expression and 0 indicating no differential expression.
+rownames(gene.list.arboreum) <- gene.list.arboreum$GeneID
+rownames(gene.list.arboreum)
+list.arboreum <- all.genes.arboreum$GeneID %in% rownames(gene.list.arboreum) 
+sum(list.arboreum)
+#for each gene in expressed gene, return FALSE if it is not in DEgene.trt and TRUE if it is.
+names(list.arboreum) <- gene.match
+head(list.arboreum)
+list.arboreum <- as.numeric(list.arboreum) #convert to 0s and 1s
+head(list.arboreum)
+sum(list.arboreum) # number of genes 
+
+# Calculate over-representation
+#determines if there is bias due to gene length.  The plot shows the relationship.
+nullp.result.arboreum <- nullp(DEgenes = list.arboreum,bias.data = gene.lengths.vector.arboreum)
+
+#calculate p-values for each GO term
+rownames(nullp.result.arboreum) <- names(gene.lengths.vector.arboreum) #because of a bug in nullp()
+GO.out.arboreum <- goseq(pwf = nullp.result.arboreum,gene2cat = go.list.arboreum,test.cats=("GO:BP"), use_genes_without_cat=TRUE)
+
+#list over-represented GO terms (p < 0.05)
+tmp <- GO.out.arboreum[GO.out.arboreum$over_represented_pvalue < 0.05,]
+tmp[grep("BP", tmp$ontology),]
+
+# GO visualization
+print(GO.out.arboreum[GO.out.arboreum$over_represented_pvalue < 0.05,1:2],row.names=FALSE)
+
+
+
 ```
 
