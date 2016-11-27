@@ -26,6 +26,14 @@ go.terms.arboreum$V4 <- gsub("GO", "GO:", go.terms.arboreum$V4)
 go.terms.arboreum <- go.terms.arboreum[,c("V1", "V4")]
 names(go.terms.arboreum) <- c("GeneID","GO")
 go.terms.arboreum$GO <- gsub("|", ",", go.terms.arboreum$GO, fixed = T) 
+head(go.terms.arboreum)
+class(go.terms.arboreum$GO)
+
+# what if combine all duplciated gene IDs 
+go.terms.arboreum <- aggregate(GO~GeneID,go.terms.arboreum,paste)
+go.terms.arboreum$GO <- gsub(" ", "", go.terms.arboreum$GO)
+head(go.terms.arboreum, 50)
+tail(go.terms.arboreum,50)
 
 # all arboreum genes 
 all.genes.arboreum <- read.delim("~/Desktop/GWAS/GWAS_analysis/GO_enrichment/arboreum_gene_ID.txt",as.is=TRUE)
@@ -71,16 +79,16 @@ nullp.result.arboreum <- nullp(DEgenes = list.arboreum,bias.data = gene.lengths.
 
 #calculate p-values for each GO term
 rownames(nullp.result.arboreum) <- names(gene.lengths.vector.arboreum) #because of a bug in nullp()
-GO.out.arboreum <- goseq(pwf = nullp.result.arboreum,gene2cat = go.list.arboreum,test.cats=("GO:BP"), use_genes_without_cat=TRUE)
+GO.out.arboreum <- goseq(pwf = nullp.result.arboreum,gene2cat = go.list.arboreum,test.cats=("GO:BP"), use_genes_without_cat=T)
+?goseq
 
 #list over-represented GO terms (p < 0.05)
 tmp <- GO.out.arboreum[GO.out.arboreum$over_represented_pvalue < 0.05,]
-tmp[grep("BP", tmp$ontology),]
+enriched_GO_term <- tmp[grep("BP", tmp$ontology),]
+write.csv(enriched_GO_term, file = "~/Desktop/GWAS/GWAS_analysis/GO_enrichment/enriched_GO_term.csv")
 
 # GO visualization
 print(GO.out.arboreum[GO.out.arboreum$over_represented_pvalue < 0.05,1:2],row.names=FALSE)
-
-
 
 ```
 
