@@ -29,11 +29,11 @@ go.terms.arboreum$GO <- gsub("|", ",", go.terms.arboreum$GO, fixed = T)
 head(go.terms.arboreum)
 class(go.terms.arboreum$GO)
 
-# what if combine all duplciated gene IDs 
-go.terms.arboreum <- aggregate(GO~GeneID,go.terms.arboreum,paste)
-go.terms.arboreum$GO <- gsub(" ", "", go.terms.arboreum$GO)
-head(go.terms.arboreum, 50)
-tail(go.terms.arboreum,50)
+# what if combine all duplciated gene IDs (how)
+go.terms.arboreum <-aggregate(go.terms.arboreum$GO,list(go.terms.arboreum$GeneID), paste, collapse=",")
+head(go.terms.arboreum)
+tail(go.terms.arboreum)
+names(go.terms.arboreum) <- c("GeneID", "GO")
 
 # all arboreum genes 
 all.genes.arboreum <- read.delim("~/Desktop/GWAS/GWAS_analysis/GO_enrichment/arboreum_gene_ID.txt",as.is=TRUE)
@@ -58,7 +58,9 @@ length(gene.lengths.vector.arboreum)
 # Format go.terms for goseq. We want them in list format, and we need to separate the terms into separate elements.
 go.list.arboreum <- strsplit(go.terms.arboreum$GO,split=",")
 names(go.list.arboreum) <- go.terms.arboreum$GeneID
-head(go.list.arboreum)
+head(go.list.arboreum, 100)
+tail(go.list.arboreum)
+length(go.list.arboreum)
 
 # Format gene expression data for goseq. 
 # We need a vector for each gene with 1 indicating differential expression and 0 indicating no differential expression.
@@ -85,6 +87,7 @@ GO.out.arboreum <- goseq(pwf = nullp.result.arboreum,gene2cat = go.list.arboreum
 #list over-represented GO terms (p < 0.05)
 tmp <- GO.out.arboreum[GO.out.arboreum$over_represented_pvalue < 0.05,]
 enriched_GO_term <- tmp[grep("BP", tmp$ontology),]
+enriched_GO_term
 write.csv(enriched_GO_term, file = "~/Desktop/GWAS/GWAS_analysis/GO_enrichment/enriched_GO_term.csv")
 
 # GO visualization
