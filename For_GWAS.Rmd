@@ -1,0 +1,64 @@
+---
+title: "for_GWAS"
+author: "Ruijuan Li"
+date: "3/20/2017"
+output: html_document
+---
+
+# phoenotype data 
+```{r}
+phenotype.data <- read.csv("~/Desktop/GWAS_manuscript/GWAS/GWAS_analysis/phenotype_data.csv", header = T)
+
+head(phenotype.data)
+phenotype.data.2 <- phenotype.data[phenotype.data$FI<150,]
+
+hist(phenotype.data.2$FI, breaks = 15, col = "grey", ylim = c(0, 70))
+
+png("~/Desktop/GWAS_manuscript/GWAS/GWAS_analysis/output/figure/phenotype.png", width=8, height=6, units="in", res=300)
+hist(phenotype.data.2$FI, breaks = 15, col = "grey", ylim = c(0, 70), xlab = "Female index", ylab="Number of accessions", main="")
+dev.off() 
+```
+
+# manhattan plot
+```{r}
+library(qqman)
+associattion.result <- read.csv("~/Desktop/GWAS_manuscript/BMC_genetics/Additional_file_4.csv", header = T)
+head(associattion.result)
+
+associattion.result.2 <- associattion.result[,c("SNP", "CHR", "BP", "P")]
+str(associattion.result.2)
+
+as.data.frame(table(associattion.result.2$CHR))
+manhattan(associattion.result.2, col = c("blue4", "orange3"), ymax = 12, suggestiveline = 3, genomewideline = 4)
+
+manhattan(subset(associattion.result.2, CHR==7), suggestiveline = 3, genomewideline = 4)
+
+?manhattan
+chr7 <- associattion.result.2[associattion.result.2$CHR=="7",]
+chr12 <- associattion.result.2[associattion.result.2$CHR=="12",]
+
+-log10(chr7[which(-log10(chr7$P) > 3),]$P)
+chr7.sub <- chr7[which(-log10(chr7$P) > 1),] 
+
+library(ggplot2)
+pl <- ggplot(data = chr7.sub)
+pl <- pl + geom_point(aes(BP, -log10(P)), colour = "blue", size = 0.2)
+pl <- pl + geom_hline(yintercept = c(3,4))
+pl 
+ggsave(pl, filename = "~/Desktop/GWAS_manuscript/GWAS/GWAS_analysis/output/figure/chr7.png", width = 8, height = 40)
+
+names(GC.R500IMB211.eitherDE.melt.subset1)<-sub("variable","tissue",names(GC.R500IMB211.eitherDE.melt.subset1))
+p1.1 <- ggplot(GC.R500IMB211.eitherDE.melt.subset1,aes(x=tissue,y=value,color=value))
+p1.1 <- p1.1 + geom_hline(yintercept=0,colour="red",size=1) # adding red line at fold change = 0 (060515)
+p1.1 <- p1.1 + geom_point(position="jitter",size=1.5,alpha=0.3) 
+p1.1 <- p1.1 + geom_boxplot(outlier.size=0,aes(fill=factor(cluster),alpha=0.8)) + theme_bw() +xlab("sun/shade treatment (hr)") + scale_colour_gradient2(low="green1",mid="gray",high="magenta")
+p1.1 <- p1.1 + facet_grid(~cluster,space="free") #+ facet_wrap(ssom3.4unit.classif~.)  ,scale="free"
+p1.1 <- p1.1 + theme(axis.text.x=element_text(angle=90),strip.text.y = element_text(angle=0),legend.position="none")
+p1.1 <- p1.1 + labs(x="", y="Log2 fold change (shade/sun)",title="Growth Chamber") + theme(plot.title = element_text(hjust = 0.5)) #
+p1.1     
+
+
+
+```
+
+
