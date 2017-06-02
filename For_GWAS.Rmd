@@ -27,6 +27,8 @@ associattion.result <- read.csv("~/Desktop/GWAS_manuscript/BMC_genetics/Addition
 library(qqman)
 
 head(associattion.result)
+# use p.adjust() to adjust p-value here, this doesn't work 
+sum(p.adjust(associattion.result$P, "none") < 0.0001)
 ```
 
 # addtive effect 
@@ -43,4 +45,49 @@ new[which(new$all_number=="6"),] # 4
 
 7: 6
 ```
+
+# GWAS 
+```{r}
+# source("http://www.bioconductor.org/biocLite.R")
+# biocLite("multtest")
+# 
+# install.packages("gplots")
+# install.packages("LDheatmap")
+# install.packages("genetics")
+# install.packages("EMMREML")
+# install.packages("scatterplot3d")
+
+library(multtest)
+library(gplots)
+# library(LDheatmap) # this could not be succesfully installed
+library(genetics)
+library(EMMREML)
+library(compiler) #this library is already installed in R
+library("scatterplot3d")
+
+# install GAPIT package
+source("http://zzlab.net/GAPIT/gapit_functions.txt")
+# intall EMMA package
+source("http://zzlab.net/GAPIT/emma.txt")
+
+# set working directory
+setwd("~/Desktop/GWAS_manuscript/BMC_genetics/GWAS_permutation/")
+
+# run GWAS for once 
+geno_data <- read.csv("~/Desktop/GWAS_manuscript/BMC_genetics/Additional_file_2.txt", header = F)
+geno_data$V3 <- as.numeric(geno_data$V3)
+class(geno_data$V3) 
+geno_data[1:10, 1:10]
+geno_data[1,3] <- "chrom"
+geno_data[1,1] <- "rs"
+geno_data[1,6] <- "assembly"
+
+pheno_data <- read.csv("~/Desktop/GWAS_manuscript/BMC_genetics/Additional_file_1.csv")
+head(pheno_data) 
+
+
+
+
+```
+
 
