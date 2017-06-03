@@ -124,3 +124,6 @@ myGAPIT <- GAPIT(Y=myY, G=myG, Model.selection=TRUE, PCA.total=0, kinship.algori
 sessionInfo() 
 ``` 
 
+
+
+
