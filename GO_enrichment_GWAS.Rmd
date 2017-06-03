@@ -117,6 +117,16 @@ myY=read.table("~/Desktop/GWAS_manuscript/GWAS/GWAS_analysis/data/association/GA
 myG=read.table("~/Desktop/GWAS_manuscript/GWAS/GWAS_analysis/data/association/GAPIT/myGAPIT/246_7220_chr14_sorted.hmp.txt", head=F)
 myGAPIT <- GAPIT(Y=myY, G=myG, Model.selection=TRUE, PCA.total=0, kinship.algorithm=c("EMMA"))
 
+### start permutation 
+# use permutation to get a reasonable threshold. 
+# 1) permuate the phenotypic data, equal to doing GWAS on 1000 traits 
+# 2) order P-value for all 1000 traits (including the ture trait)
+# 3) get the 95% quantile, set that as the threshold for p-value 
+
+
+
+
+
 ```
 
 # session info
