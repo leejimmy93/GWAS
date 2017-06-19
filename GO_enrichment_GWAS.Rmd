@@ -126,7 +126,7 @@ start permutation
 # 3) get the 95% quantile, set that as the threshold for p-value 
 
 # 1) shuffle phentoype data 
-permute.G <- read.table("~/GWAS/246_FI.txt", header=T)
+permute.G <- read.table("~/arboreum/GWAS/GWAS/246_FI.txt", header=T)
 
 permutation = 999 
 
@@ -137,15 +137,30 @@ for (i in 1:permutation){
 } 
 dim(permute.G) # 246 1000 
 colnames(permute.G)[1] <- "Taxa"
-write.table(permute.G, "~/GWAS/permute.G.txt")
+write.table(permute.G, "~/arboreum/GWAS/GWAS/permute.G.txt")
 # GWAS on whitney with permuated phenotype data ...  
 
 ```
 
-# session info
+# get P-value for the most significant SNPs (not include the original one/the 1st one), reorder, use 95% as the threshold for final P-value selection. 
 ```{r}
-sessionInfo() 
-``` 
+# get all the result csv file 
+setwd("~/arboreum/GAPIT_permutation/")
+permutation_file <- grep("GWAS.Results.csv", list.files(), value=T)
+permutation_result = lapply(permutation_file, read.csv) 
+
+min(permutation_result[[1]]$P.value)
+# extract P-value for the most significant SNP from each result csv file, combine, plot the distribution (hist), get the 95%  
+Pvalues <- c()
+
+for (i in 2:length(permutation_result)){
+  Pvalues[i-1] <- min(permutation_result[[i]]$P.value)
+}
+
+hist(Pvalues, breaks=100)
+threshold <- Pvalues[order(Pvalues)][950] 
+threshold # 0.0009612852 
+```
 
 
 
