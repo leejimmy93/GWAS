@@ -124,9 +124,6 @@ myGAPIT <- GAPIT(Y=myY, G=myG, Model.selection=TRUE, PCA.total=0, kinship.algori
 # 3) get the 95% quantile, set that as the threshold for p-value 
 
 
-
-
-
 ```
 
 # session info
