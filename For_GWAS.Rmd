@@ -34,9 +34,10 @@ sum(p.adjust(associattion.result$P, "none") < 0.0001)
 #### addtive effect
 find the resistance allele, and test for additive effect, r square value. 
 ```{r} 
+library(tidyverse)
 # determine which is the resistant allele, alleles that decrease trait value 
 # import allele estimate 
-allele_estimate <- read.csv("~/Desktop/GWAS_manuscript/GWAS/GWAS_analysis/data/association/GAPIT/myGAPIT/GAPIT..FI.Allelic_Effect_Estimates.csv", header = T)
+allele_estimate <- read.csv("~/Desktop/GWAS_manuscript/BMC_genetics/GWAS_permutation/GAPIT..FI.Allelic_Effect_Estimates.csv", header = T)
 head(allele_estimate)
 
 # GWAS result 
@@ -44,14 +45,90 @@ associattion.result <- read.csv("~/Desktop/GWAS_manuscript/BMC_genetics/Addition
 sig_SNP <- associattion.result[which(associattion.result$P < 0.001),]$SNP
 
 # get allele effect for sig SNPs
-allele_estimate[which(allele_estimate$SNP %in% sig_SNP),] 
+allele_estimate[which(allele_estimate$SNP %in% sig_SNP),] # S1_352262064 having monor allele as resistance allele 
 
-# 
+# compare genotype data with major & minor allele for the 15 loci to look for relationship 
+myY=read.table("~/Desktop/GWAS_manuscript/GWAS/GWAS_analysis/data/association/GAPIT/myGAPIT/246_FI.txt", head=TRUE)
+head(myY)
+
+myG=read.table("~/Desktop/GWAS_manuscript/GWAS/GWAS_analysis/data/association/GAPIT/myGAPIT/246_7220_chr14_sorted.hmp.txt", head=T)
+myG[1:10, 1:10]
+
+sig_SNP_G <- 
+myG[which(myG$rs %in% sig_SNP),]
+
+sig_SNP_G.2 <- 
+sig_SNP_G %>%
+  separate(alleles, into=c("major", "minor")) 
+
+## site summary including major & minor allele info 
+site_summary <- read.delim("~/Desktop/GWAS_manuscript/GWAS/GWAS_analysis/data/association/GAPIT/myGAPIT/site_summary_arboreum.txt", header = T)
+head(site_summary)
+site_summary[which(site_summary$Site.Name %in% sig_SNP),][,c("Site.Name","Major.Allele", "Minor.Allele")]
+
+## now sure in hapmap file, alleles column, before / is major allele, after / is minor allele. 
+
+sig_SNP_G.2
+myY
+# need to combine these two information  
+head(sig_SNP_G.2)
+sig_SNP_G.2$resistance <- sig_SNP_G.2$major
+sig_SNP_G.2[sig_SNP_G.2$rs=="S1_352262064",]$resistance <- sig_SNP_G.2[sig_SNP_G.2$rs=="S1_352262064",]$minor
+
+# replace allele symbol to resistance allele symbol  
+sig_SNP_G.2[1:10, 1:15]
+
+for(i in 1:nrow(sig_SNP_G.2)){{
+  for(j in grep("PI", colnames(sig_SNP_G.2))){
+    sig_SNP_G.2[i,j] <- ifelse(sig_SNP_G.2[i,j]==sig_SNP_G.2$resistance[i], "R", "N")
+  }
+}
+}
+
+dim(sig_SNP_G.2) 
+sig_SNP_G.2[1:10, 1:10]
+
+# combine resistance allele info with phenotype data 
+sig_SNP_G.2.t.df <- data.frame(t(sig_SNP_G.2[,grep("PI", colnames(sig_SNP_G.2), value = T)]))
+Taxa <- rownames(sig_SNP_G.2.t.df)
+sig_SNP_G.2.t.df <- data.frame(sapply(sig_SNP_G.2.t.df, function(x) sub("R", "1", x)))
+sig_SNP_G.2.t.df <- data.frame(sapply(sig_SNP_G.2.t.df, function(x) sub("N", "0", x)))
+sig_SNP_G.2.t.df <- data.frame(sapply(sig_SNP_G.2.t.df, function(x) as.numeric(as.character(x))))
+
+rownames(sig_SNP_G.2.t.df) <- Taxa
+sig_SNP_G.2.t.df
+
+sig_SNP_G.2.t.df.2 <- 
+as.data.frame(rowSums(sig_SNP_G.2.t.df))
+
+sig_SNP_G.2.t.df.2$Taxa <- rownames(sig_SNP_G.2.t.df.2) 
+colnames(myY) <- c("Taxa", "FI")
+
+sig_SNP_G.2.t.df.3 <- 
+sig_SNP_G.2.t.df.2 %>%
+  left_join(myY, by="Taxa") 
+
+colnames(sig_SNP_G.2.t.df.3)[1] <- "R.number" 
+
+additive_estimate <- 
+sig_SNP_G.2.t.df.3 %>%
+  group_by(R.number) %>%
+  summarise(mean(FI)) %>%
+  as.data.frame()
+  
+boxplot(sig_SNP_G.2.t.df.3$FI~sig_SNP_G.2.t.df.3$R.number, xlab="number of resistance alleles", ylab="female index", col="grey") 
+
+## fit a linear model, regression 
+plot(new$all_FI~new$all_number, xlab="number of resistance alleles", ylab="female index", col="grey") 
+plot(sig_SNP_G.2.t.df.3$FI~sig_SNP_G.2.t.df.3$R.number, xlab="number of resistance alleles", ylab="female index", col="grey") 
+
+fit=lm(new$all_FI ~ new$all_number)
+summary(fit)
+confint(fit)
+fit$coefficients
 
 
-
-
-
+  
 ## additive effect test 
 new <- read.csv("~/Desktop/GWAS_manuscript/GWAS/GWAS_analysis/data/allele_effect/additive_effect/FI_resistance_allele_number.csv", sep = ",")
 View(new) 
@@ -61,16 +138,7 @@ new[which(new$all_number=="3"),] # 2
 new[which(new$all_number=="5"),] # 2
 new[which(new$all_number=="4"),] # 3 
 new[which(new$all_number=="2"),] # 4
-new[which(new$all_number=="6"),] # 4
-
-## fit a linear model, regression 
-plot(new$all_FI~new$all_number, xlab="number of resistance alleles", ylab="female index", col="grey") 
-
-fit=lm(new$all_FI ~ new$all_number)
-summary(fit)
-confint(fit)
-fit$coefficients
-
+new[which(new$all_number=="6"),] # 4 
 ```
 
 # import data 
@@ -189,9 +257,7 @@ myGAPIT <- GAPIT(Y=myY, G=myG, Model.selection=TRUE, PCA.total=0, Major.allele.z
 # use permutation to get a reasonable threshold. 
 # 1) permuate the phenotypic data, equal to doing GWAS on 1000 traits 
 # 2) order P-value for all 1000 traits (including the ture trait)
-# 3) get the 95% quantile, set that as the threshold for p-value 
-
-
+# 3) get the 95% quantile, set that as the threshold for p-value  
 ```
 
 # session info
