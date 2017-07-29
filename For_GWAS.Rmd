@@ -122,10 +122,12 @@ boxplot(sig_SNP_G.2.t.df.3$FI~sig_SNP_G.2.t.df.3$R.number, xlab="number of resis
 plot(new$all_FI~new$all_number, xlab="number of resistance alleles", ylab="female index", col="grey") 
 plot(sig_SNP_G.2.t.df.3$FI~sig_SNP_G.2.t.df.3$R.number, xlab="number of resistance alleles", ylab="female index", col="grey") 
 
-fit=lm(new$all_FI ~ new$all_number)
+fit=lm(sig_SNP_G.2.t.df.3$FI ~ sig_SNP_G.2.t.df.3$R.number)
 summary(fit)
 confint(fit)
 fit$coefficients
+
+### how to analyze this dataset? 
 
 
   
