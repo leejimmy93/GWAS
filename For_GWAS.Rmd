@@ -115,21 +115,29 @@ sig_SNP_G.2.t.df.3 %>%
   group_by(R.number) %>%
   summarise(mean(FI)) %>%
   as.data.frame()
+
+plot(additive_estimate$`mean(FI)`~additive_estimate$R.number)
+additive_estimate
   
 boxplot(sig_SNP_G.2.t.df.3$FI~sig_SNP_G.2.t.df.3$R.number, xlab="number of resistance alleles", ylab="female index", col="grey") 
 
 ## fit a linear model, regression 
 plot(new$all_FI~new$all_number, xlab="number of resistance alleles", ylab="female index", col="grey") 
 plot(sig_SNP_G.2.t.df.3$FI~sig_SNP_G.2.t.df.3$R.number, xlab="number of resistance alleles", ylab="female index", col="grey") 
+abline(a = 78, b = -3)
 
 fit=lm(sig_SNP_G.2.t.df.3$FI ~ sig_SNP_G.2.t.df.3$R.number)
 summary(fit)
 confint(fit)
-fit$coefficients
+fit$coefficients 
+
+## check residual plot 
+res <- resid(fit)
+plot(sig_SNP_G.2.t.df.3$R.number, res)
+abline(0, 0)
 
 ### how to analyze this dataset? 
-
-
+cor.test(sig_SNP_G.2.t.df.3$R.number, sig_SNP_G.2.t.df.3$FI) 
   
 ## additive effect test 
 new <- read.csv("~/Desktop/GWAS_manuscript/GWAS/GWAS_analysis/data/allele_effect/additive_effect/FI_resistance_allele_number.csv", sep = ",")
