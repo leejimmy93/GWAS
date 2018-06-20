@@ -29,6 +29,10 @@ library(qqman)
 head(associattion.result)
 # use p.adjust() to adjust p-value here, this doesn't work 
 sum(p.adjust(associattion.result$P, "none") < 0.0001)
+
+## check R squared values 
+associattion.result[associattion.result$P < 0.001,] %>%
+  mutate(diff = Rsquare.of.Model.with.SNP-Rsquare.of.Model.without.SNP)
 ```
 
 #### addtive effect
@@ -37,21 +41,21 @@ find the resistance allele, and test for additive effect, r square value.
 library(tidyverse)
 # determine which is the resistant allele, alleles that decrease trait value 
 # import allele estimate 
-allele_estimate <- read.csv("~/Desktop/GWAS_manuscript/BMC_genetics/GWAS_permutation/GAPIT..FI.Allelic_Effect_Estimates.csv", header = T)
-head(allele_estimate)
+allele_estimate <- read.csv("~/Desktop/working_manuscript/GWAS_manuscript/BMC_genetics/GWAS_permutation/GAPIT..FI.Allelic_Effect_Estimates.csv", header = T)
+head(allele_estimate) 
 
 # GWAS result 
-associattion.result <- read.csv("~/Desktop/GWAS_manuscript/BMC_genetics/Additional_file_4.csv", header = T)
+associattion.result <- read.csv("~/Desktop/working_manuscript/GWAS_manuscript/BMC_genetics/Additional_file_4.csv", header = T)
 sig_SNP <- associattion.result[which(associattion.result$P < 0.001),]$SNP
 
 # get allele effect for sig SNPs
 allele_estimate[which(allele_estimate$SNP %in% sig_SNP),] # S1_352262064 having monor allele as resistance allele 
 
 # compare genotype data with major & minor allele for the 15 loci to look for relationship 
-myY=read.table("~/Desktop/GWAS_manuscript/GWAS/GWAS_analysis/data/association/GAPIT/myGAPIT/246_FI.txt", head=TRUE)
+myY=read.table("~/Desktop/working_manuscript/GWAS_manuscript/GWAS/GWAS_analysis/data/association/GAPIT/myGAPIT/246_FI.txt", head=TRUE)
 head(myY)
 
-myG=read.table("~/Desktop/GWAS_manuscript/GWAS/GWAS_analysis/data/association/GAPIT/myGAPIT/246_7220_chr14_sorted.hmp.txt", head=T)
+myG=read.table("~/Desktop/working_manuscript/GWAS_manuscript/GWAS/GWAS_analysis/data/association/GAPIT/myGAPIT/246_7220_chr14_sorted.hmp.txt", head=T)
 myG[1:10, 1:10]
 
 sig_SNP_G <- 
@@ -62,7 +66,7 @@ sig_SNP_G %>%
   separate(alleles, into=c("major", "minor")) 
 
 ## site summary including major & minor allele info 
-site_summary <- read.delim("~/Desktop/GWAS_manuscript/GWAS/GWAS_analysis/data/association/GAPIT/myGAPIT/site_summary_arboreum.txt", header = T)
+site_summary <- read.delim("~/Desktop/working_manuscript/GWAS_manuscript/GWAS/GWAS_analysis/data/association/GAPIT/myGAPIT/site_summary_arboreum.txt", header = T)
 head(site_summary)
 site_summary[which(site_summary$Site.Name %in% sig_SNP),][,c("Site.Name","Major.Allele", "Minor.Allele")]
 
@@ -135,20 +139,24 @@ fit$coefficients
 res <- resid(fit)
 plot(sig_SNP_G.2.t.df.3$R.number, res)
 abline(0, 0)
+hist(res) # almost normally distributed 
 
 ### how to analyze this dataset? 
 cor.test(sig_SNP_G.2.t.df.3$R.number, sig_SNP_G.2.t.df.3$FI) 
+
+### how many accessions have fewer than 6 resistance alleles
+sum(sig_SNP_G.2.t.df.3$R.number < 6)
   
 ## additive effect test 
-new <- read.csv("~/Desktop/GWAS_manuscript/GWAS/GWAS_analysis/data/allele_effect/additive_effect/FI_resistance_allele_number.csv", sep = ",")
+new <- read.csv("~/Desktop/working_manuscript/GWAS_manuscript/GWAS/GWAS_analysis/data/allele_effect/additive_effect/FI_resistance_allele_number.csv", sep = ",")
 View(new) 
 boxplot(new$all_FI~new$all_number, xlab="number of resistance alleles", ylab="female index", col="grey") 
 
-new[which(new$all_number=="3"),] # 2
+new[which(new$all_number=="3"),] # 2 
 new[which(new$all_number=="5"),] # 2
 new[which(new$all_number=="4"),] # 3 
 new[which(new$all_number=="2"),] # 4
-new[which(new$all_number=="6"),] # 4 
+new[which(new$all_number=="6"),] # 4   
 ```
 
 # import data 
@@ -268,6 +276,12 @@ myGAPIT <- GAPIT(Y=myY, G=myG, Model.selection=TRUE, PCA.total=0, Major.allele.z
 # 1) permuate the phenotypic data, equal to doing GWAS on 1000 traits 
 # 2) order P-value for all 1000 traits (including the ture trait)
 # 3) get the 95% quantile, set that as the threshold for p-value  
+```
+
+### only look at the genes in the 72kb flanking region instead of 300kb 
+```{r}
+
+
 ```
 
 # session info
