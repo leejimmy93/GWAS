@@ -280,7 +280,53 @@ myGAPIT <- GAPIT(Y=myY, G=myG, Model.selection=TRUE, PCA.total=0, Major.allele.z
 
 ### only look at the genes in the 72kb flanking region instead of 300kb 
 ```{r}
+file_5 <- read.csv("~/Desktop/GWAS_manuscript/BMC_genetics/Additional_file_5.csv")
+file_5
+file_5$chromosomes <- gsub("(locus)(=)(Ca|CA_chr)([[:digit:]]+)", "\\4" ,file_5$chromosomes)
 
+file_6 <- read.csv("~/Desktop/GWAS_manuscript/BMC_genetics/Additional_file_6.csv")
+file_6 <- file_6[1:41, 1:23]
+file_6$chr <- gsub("(locus)(=)(Ca|CA_chr)([[:digit:]]+)", "\\4" ,file_6$chr)
+file_6$chr <- file_6$chr %>% as.character() 
+
+file_4 <- read.csv("~/Desktop/GWAS_manuscript/BMC_genetics/Additional_file_4.csv")
+SNP <-
+file_4 %>% 
+  filter(P < 0.001) 
+
+gff.genes <- GRanges(seqnames = Rle(file_5$chromosomes),ranges = IRanges(start = file_5$start, end = file_5$stop), names = file_5$Candidate.gene.model) 
+
+gff.DEGs <- GRanges(seqnames = Rle(file_6$chr),ranges = IRanges(start = file_6$start, end = file_6$end), names = file_6$gene_model_ID) 
+
+SNP.range <- GRanges(seqnames = Rle(SNP$CHR), ranges = IRanges(start = SNP$BP - 72000, end = SNP$BP + 72000))
+
+SNP_range_gene <- mergeByOverlaps(SNP.range, gff.genes)
+
+SNP_range_gene <- 
+SNP_range_gene %>% 
+  as.data.frame() %>% 
+  mutate(Candidate.gene.model = gff.genes.names,
+         chromosomes = gff.genes.seqnames, 
+         start = gff.genes.start, 
+         stop = gff.genes.end) %>% 
+  dplyr::select(Candidate.gene.model, chromosomes, start, stop) %>% 
+  left_join(file_5) 
+
+write.csv(SNP_range_gene, file = "~/Desktop/GWAS_manuscript/BMC_genetics/Additonal_file_5.csv")
+
+SNP_range_DEGs <- mergeByOverlaps(SNP.range, gff.DEGs)
+
+SNP_range_DEGs <- 
+SNP_range_DEGs %>% 
+  as.data.frame() %>% 
+  mutate(gene_model_ID = gff.DEGs.names,
+         chr = gff.DEGs.seqnames, 
+         start = gff.DEGs.start, 
+         end = gff.DEGs.end) %>% 
+  dplyr::select(gene_model_ID, chr, start, end) %>% 
+  left_join(file_6) 
+
+write.csv(SNP_range_DEGs, file = "~/Desktop/GWAS_manuscript/BMC_genetics/Additonal_file_5.csv")
 
 ```
 
